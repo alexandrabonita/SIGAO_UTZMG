@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Imprimir Etiquetas QR{% endblock %}
+
+{% block content %}
+<style>
+  @media print {
+    body { background-color: white !important; }
+    .no-print, nav { display: none !important; }
+    .pagina-etiquetas {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 15px !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .etiqueta-card {
+      border: 1.5px solid #000 !important;
+      page-break-inside: avoid;
+      box-shadow: none !important;
+    }
+  }
+  .etiqueta-card {
+    border: 1px dashed #aaa;
+    border-radius: 8px;
+    background: white;
+    padding: 12px;
+    text-align: center;
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+  <div>
+    <h2 class="h4 fw-bold mb-0">Impresión de Etiquetas QR para Equipos</h2>
+    <p class="text-muted small mb-0">Formato listo para impresión directa en hoja carta o papel autoadhesivo.</p>
+  </div>
+  <button onclick="window.print()" class="btn btn-primary fw-bold">
+    <i class="bi bi-printer-fill me-1"></i> Imprimir Etiquetas (Ctrl + P)
+  </button>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-3 pagina-etiquetas">
+  {% for eq in equipos %}
+  <div class="col">
+    <div class="etiqueta-card shadow-sm h-100 d-flex flex-column justify-content-between">
+      <div>
+        <div style="font-size: 11px; font-weight: bold; letter-spacing: 0.5px;" class="text-uppercase text-secondary">
+          SIGAO_UTZMG
+        </div>
+        <div style="font-size: 13px; font-weight: bold;" class="mt-1">
+          {{ eq.nombre }}
+        </div>
+        <div style="font-size: 11px;" class="text-muted mb-2">
+          {{ eq.laboratorio.nombre }}
+        </div>
+      </div>
+
+      <div class="my-2">
+        <!-- Generación de QR dinámico -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={{ base_url }}/equipos/{{ eq.id_codigo_qr }}/reportar" 
+             alt="QR {{ eq.id_codigo_qr }}" 
+             style="width: 130px; height: 130px;" 
+             class="img-fluid border p-1 rounded">
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-family: monospace; font-weight: bold;" class="text-dark">
+          ID: {{ eq.id_codigo_qr }}
+        </div>
+        <div style="font-size: 10px;" class="text-muted">
+          Escanea para reportar fallas
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-center py-5 no-print">
+    <p class="text-muted">No hay equipos dados de alta en el inventario. Da de alta al menos uno en <a href="/equipos">Equipos</a>.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Servicio de Préstamos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="h4 fw-bold mb-0">Servicio de Préstamos (Equipos y Espacios)</h2>
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoPrestamoModal"><i class="bi bi-journal-plus"></i> Registrar Préstamo</button>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Tipo</th>
+          <th>Laboratorio / Equipo</th>
+          <th>Solicitante</th>
+          <th>Fecha Salida</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prestamos %}
+        <tr>
+          <td><span class="badge bg-secondary">{{ p.tipo.value }}</span></td>
+          <td>
+            <strong>{{ p.laboratorio.nombre }}</strong>
+            {% if p.equipo %}<br><small class="text-muted">{{ p.equipo.nombre }} ({{ p.equipo_id }})</small>{% endif %}
+          </td>
+          <td>{{ p.nombre_completo }} <br><small class="text-muted">{{ p.rol_solicitante }} - {{ p.matricula_numero }}</small></td>
+          <td>{{ p.fecha_salida.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            <span class="badge {% if p.estatus.value == 'Activo / En Préstamo' %}bg-primary{% elif p.estatus.value == 'Devuelto' %}bg-success{% else %}bg-danger{% endif %}">
+              {{ p.estatus.value }}
+            </span>
+          </td>
+          <td>
+            {% if p.estatus.value == 'Activo / En Préstamo' %}
+            <form action="/prestamos/{{ p.id }}/devolver" method="post" class="d-inline">
+              <input type="hidden" name="con_incidencia" value="false">
+              <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check-circle"></i> Recibir Conforme</button>
+            </form>
+            <form action="/prestamos/{{ p.id }}/devolver" method="post" class="d-inline">
+              <input type="hidden" name="con_incidencia" value="true">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Devuelto con daño"><i class="bi bi-exclamation-triangle"></i> Con Falla</button>
+            </form>
+            {% else %}
+            <span class="text-muted small">Cerrado</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Registro Préstamo -->
+<div class="modal fade" id="nuevoPrestamoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form action="/prestamos/crear" method="post" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo Registro de Préstamo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Tipo de Préstamo</label>
+          <select name="tipo" class="form-select">
+            <option value="Equipo Fijo / Herramental">Equipo Específico / Herramental</option>
+            <option value="Espacio de Laboratorio Completo">Espacio de Laboratorio Completo</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Laboratorio</label>
+          <select name="laboratorio_id" class="form-select">
+            {% for l in laboratorios %}<option value="{{ l.id }}">{{ l.nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Equipo a prestar (Dejar en blanco si es solo el espacio)</label>
+          <select name="equipo_id" class="form-select">
+            <option value="">-- Sin equipo específico asignado --</option>
+            {% for eq in equipos %}<option value="{{ eq.id_codigo_qr }}">{{ eq.nombre }} ({{ eq.id_codigo_qr }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <label class="form-label">Rol</label>
+            <select name="rol_solicitante" class="form-select">
+              <option value="Estudiante">Estudiante</option>
+              <option value="Profesor">Profesor</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Matrícula / Nómina</label>
+            <input type="text" name="matricula_numero" class="form-control" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nombre Completo del Solicitante</label>
+          <input type="text" name="nombre_completo" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Propósito / Observaciones</label>
+          <textarea name="observaciones" class="form-control" rows="2" placeholder="Práctica de la materia de..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Registrar y Entregar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

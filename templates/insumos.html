@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Control de Insumos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="h4 fw-bold mb-0">Control de Insumos y Consumibles</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoInsumoModal"><i class="bi bi-plus-circle"></i> Nuevo Insumo</button>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Código QR</th>
+          <th>Descripción</th>
+          <th>Laboratorio</th>
+          <th>Categoría</th>
+          <th>Stock Actual</th>
+          <th>Mínimo</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ins in consumibles %}
+        <tr class="{% if ins.stock_actual <= ins.stock_minimo %}table-warning{% endif %}">
+          <td><code>{{ ins.id_codigo_qr }}</code></td>
+          <td><strong>{{ ins.descripcion }}</strong></td>
+          <td>{{ ins.laboratorio.nombre }}</td>
+          <td>{{ ins.categoria }}</td>
+          <td>
+            <span class="badge {% if ins.stock_actual <= ins.stock_minimo %}bg-danger{% else %}bg-success{% endif %} fs-6">
+              {{ ins.stock_actual }} {{ ins.unidad_medida }}
+            </span>
+          </td>
+          <td>{{ ins.stock_minimo }}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#despachoModal{{ ins.id_codigo_qr }}">
+              <i class="bi bi-box-arrow-right"></i> Despachar
+            </button>
+
+            <!-- Modal Despacho -->
+            <div class="modal fade" id="despachoModal{{ ins.id_codigo_qr }}" tabindex="-1">
+              <div class="modal-dialog">
+                <form action="/insumos/despachar" method="post" class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Despacho: {{ ins.descripcion }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="hidden" name="id_codigo_qr" value="{{ ins.id_codigo_qr }}">
+                    <div class="mb-3">
+                      <label class="form-label">Cantidad a retirar (Disponibles: {{ ins.stock_actual }})</label>
+                      <input type="number" name="cantidad" max="{{ ins.stock_actual }}" min="1" class="form-control" required value="1">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Matrícula Solicitante</label>
+                      <input type="text" name="matricula_solicitante" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Docente Responsable de Práctica</label>
+                      <input type="text" name="docente_a_cargo" class="form-control" required>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Registrar Salida</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Registro Insumo -->
+<div class="modal fade" id="nuevoInsumoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form action="/insumos/nuevo" method="post" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Alta de Consumible</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Código QR / Identificador</label>
+          <input type="text" name="id_codigo_qr" class="form-control" required placeholder="Ej. BROCA-01">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Laboratorio</label>
+          <select name="laboratorio_id" class="form-select">
+            {% for l in laboratorios %}<option value="{{ l.id }}">{{ l.nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <input type="text" name="descripcion" class="form-control" required placeholder="Ej. Broca para CNC 1/8'">
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <label class="form-label">Stock Inicial</label>
+            <input type="number" name="stock_actual" class="form-control" value="10" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Stock Mínimo Alerta</label>
+            <input type="number" name="stock_minimo" class="form-control" value="3" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <label class="form-label">Categoría</label>
+            <input type="text" name="categoria" class="form-control" placeholder="CNC, Neumática...">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Unidad de Medida</label>
+            <input type="text" name="unidad_medida" class="form-control" value="pz">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar Insumo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

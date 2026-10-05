@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Administración de Usuarios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold mb-0"><i class="bi bi-person-gear"></i> Aprobación y Gestión de Usuarios</h3>
+</div>
+
+<!-- 1. SOLICITUDES DE AUTOREGISTRO PENDIENTES -->
+<div class="card shadow-sm mb-4 border-warning">
+  <div class="card-header bg-warning fw-bold text-dark d-flex justify-content-between align-items-center">
+    <span>Solicitudes de Autoregistro Pendientes</span>
+    <span class="badge bg-dark fs-6">{{ pendientes|length }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Solicitante</th>
+          <th>Matrícula / Correo</th>
+          <th>Fecha Registro</th>
+          <th>Asignar Rol y Laboratorio(s)</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pendientes %}
+        <tr>
+          <form action="/admin/usuarios/{{ p.id }}/aprobar" method="post">
+            <td><strong>{{ p.nombre_completo }}</strong></td>
+            <td>{{ p.matricula_nomina }}<br><small class="text-muted">{{ p.correo }}</small></td>
+            <td>{{ p.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+              <div class="mb-2">
+                <select name="rol" class="form-select form-select-sm" required>
+                  {% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">
+                  Seleccionar Labs (Opcional)
+                </button>
+                <div class="dropdown-menu p-3 shadow" style="max-height: 200px; overflow-y: auto;">
+                  <small class="text-muted d-block mb-1">Si no marcas ninguno, tendrá alcance General:</small>
+                  {% for l in laboratorios %}
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="laboratorios_ids" value="{{ l.id }}" id="pend_lab_{{ p.id }}_{{ l.id }}">
+                    <label class="form-check-label small" for="pend_lab_{{ p.id }}_{{ l.id }}">{{ l.nombre }}</label>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </td>
+            <td>
+              <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="bi bi-check-circle"></i> Aprobar</button>
+            </td>
+          </form>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center py-3 text-muted">No hay registros pendientes de aprobación.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 2. USUARIOS HABILITADOS EN PLATAFORMA -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold">Usuarios Habilitados en Plataforma</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nombre</th>
+          <th>Rol Actual</th>
+          <th>Laboratorio(s) Vinculado(s)</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in activos %}
+        <tr>
+          <td>
+            <strong>{{ u.nombre_completo }}</strong><br>
+            <small class="text-muted">{{ u.matricula_nomina }} | {{ u.correo }}</small>
+          </td>
+          <td><span class="badge bg-secondary">{{ u.rol.value }}</span></td>
+          <td>
+            {% if u.laboratorios_asignados %}
+              {% for lab in u.laboratorios_asignados %}
+                <span class="badge bg-info text-dark me-1 mb-1">{{ lab.nombre }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small">Global / General</span>
+            {% endif %}
+          </td>
+          <td><span class="badge bg-success">Activo</span></td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ u.id }}">
+                <i class="bi bi-pencil-square"></i> Editar
+              </button>
+
+              {% if u.id != usuario.id %}
+              <form action="/admin/usuarios/{{ u.id }}/estado" method="post" class="d-inline">
+                <button class="btn btn-outline-danger" onclick="return confirm('¿Suspender este usuario?')">Dar de Baja</button>
+              </form>
+              {% endif %}
+            </div>
+
+            <!-- MODAL DE EDICIÓN PARA CADA USUARIO -->
+            <div class="modal fade" id="editModal{{ u.id }}" tabindex="-1">
+              <div class="modal-dialog">
+                <form action="/admin/usuarios/{{ u.id }}/editar" method="post" class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuario: {{ u.nombre_completo }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold">Nombre Completo</label>
+                      <input type="text" name="nombre_completo" class="form-control" value="{{ u.nombre_completo }}" required>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-6">
+                        <label class="form-label small fw-bold">Matrícula / Nómina</label>
+                        <input type="text" name="matricula_nomina" class="form-control" value="{{ u.matricula_nomina }}" required>
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label small fw-bold">Correo</label>
+                        <input type="email" name="correo" class="form-control" value="{{ u.correo }}" required>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold">Rol en Sistema</label>
+                      <select name="rol" class="form-select" required>
+                        {% for r in roles %}
+                        <option value="{{ r }}" {% if u.rol.value == r %}selected{% endif %}>{{ r }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold d-block">Laboratorios que Coordina / Encargado</label>
+                      <div class="border rounded p-2 bg-light" style="max-height: 180px; overflow-y: auto;">
+                        <small class="text-muted d-block mb-2">Puedes marcar más de uno. Si no marcas ninguno, tendrá alcance General:</small>
+                        {% for l in laboratorios %}
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="laboratorios_ids" value="{{ l.id }}" id="edit_lab_{{ u.id }}_{{ l.id }}"
+                          {% if l in u.laboratorios_asignados %}checked{% endif %}>
+                          <label class="form-check-label small" for="edit_lab_{{ u.id }}_{{ l.id }}">{{ l.nombre }}</label>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Guardar Cambios</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

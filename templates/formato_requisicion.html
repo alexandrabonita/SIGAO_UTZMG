@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Requisición Oficial - {{ req.folio }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      .no-print { display: none; }
+      body { font-size: 12pt; background: #fff; }
+      .container { width: 100% !important; max-width: 100% !important; }
+    }
+    .caja-firma { height: 75px; border-bottom: 1.5px solid #000; }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container border p-4 bg-white shadow-sm">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+      <div>
+        <h5 class="fw-bold mb-0">UNIVERSIDAD TECNOLÓGICA DE LA ZONA METROPOLITANA DE GUADALAJARA</h5>
+        <div class="small text-muted">Dirección de Carrera de Mecatrónica | Control de Laboratorios</div>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-dark fs-6">{{ req.folio }}</span>
+        <div class="small text-muted">Fecha: {{ req.fecha_solicitud.strftime('%d/%m/%Y') }}</div>
+      </div>
+    </div>
+
+    <div class="no-print mb-3 text-end">
+      <button onclick="window.print()" class="btn btn-primary btn-sm"><i class="bi bi-printer"></i> Imprimir Requisición (Ctrl + P)</button>
+    </div>
+
+    <h4 class="text-center fw-bold my-3 text-uppercase">{{ req.tipo.value }}</h4>
+
+    <table class="table table-bordered mb-4">
+      <tr>
+        <th class="table-light" style="width: 25%;">Laboratorio Solicitante:</th>
+        <td>{{ req.laboratorio.nombre }}</td>
+        <th class="table-light" style="width: 20%;">Equipo Involucrado:</th>
+        <td>{{ req.equipo.nombre if req.equipo else 'N/A' }} ({{ req.equipo_id if req.equipo_id else 'Consumo general' }})</td>
+      </tr>
+      <tr>
+        <th class="table-light">Encargado Solicitante:</th>
+        <td>{{ req.encargado_solicita }}</td>
+        <th class="table-light">Ticket Asociado:</th>
+        <td>Ticket #{{ req.ticket_id }}</td>
+      </tr>
+    </table>
+
+    <div class="mb-3">
+      <h6 class="fw-bold">1. Justificación y Diagnóstico Técnico:</h6>
+      <div class="p-3 border rounded bg-light">{{ req.justificacion }}</div>
+    </div>
+
+    <div class="mb-3">
+      <h6 class="fw-bold">2. Especificaciones de Insumos o Servicios Requeridos:</h6>
+      <div class="p-3 border rounded bg-light">{{ req.especificaciones_tecnicas }}</div>
+    </div>
+
+    <div class="mb-4">
+      <h6 class="fw-bold">3. Estimación Presupuestal:</h6>
+      <div class="p-2 border rounded"><strong>Costo Estimado:</strong> ${{ "%.2f"|format(req.costo_estimado) if req.costo_estimado else '0.00' }} MXN</div>
+    </div>
+
+    <div class="row text-center mt-5 pt-4">
+      <div class="col-4">
+        <div class="caja-firma"></div>
+        <div class="small fw-bold mt-1">{{ req.encargado_solicita }}</div>
+        <div class="small text-muted">Encargado de Laboratorio</div>
+      </div>
+      <div class="col-4">
+        <div class="caja-firma"></div>
+        <div class="small fw-bold mt-1">Mtro. Jesús Pérez Merlos</div>
+        <div class="small text-muted">Presidente de Academia</div>
+      </div>
+      <div class="col-4">
+        <div class="caja-firma"></div>
+        <div class="small fw-bold mt-1">Dirección de Administración</div>
+        <div class="small text-muted">Validación Presupuestal</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Escanear Código QR{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center">
+    <div class="card shadow-sm p-4">
+      <h3 class="h5 fw-bold mb-3"><i class="bi bi-camera"></i> Escáner de Equipos e Insumos</h3>
+      <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden;" class="mb-3"></div>
+      <p class="text-muted small">Apunta con la cámara al código QR pegado en el chasis del equipo o gaveta de insumo.</p>
+      
+      <div class="border-top pt-3 mt-2">
+        <label class="form-label small text-muted">¿Cámara no disponible? Ingresa el código manual:</label>
+        <div class="input-group">
+          <input type="text" id="manualCode" class="form-control" placeholder="Ej. CNC-01 o INS-04">
+          <button class="btn btn-primary" onclick="redirigirManual()">Abrir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  function onScanSuccess(decodedText, decodedResult) {
+    html5QrcodeScanner.clear();
+    // Si el QR ya es una URL completa navega directo, si es un código relativo redirige a reportar
+    if (decodedText.startsWith("http")) {
+      window.location.href = decodedText;
+    } else {
+      window.location.href = "/equipos/" + encodeURIComponent(decodedText) + "/reportar";
+    }
+  }
+
+  function redirigirManual() {
+    const val = document.getElementById("manualCode").value.trim();
+    if(val) window.location.href = "/equipos/" + encodeURIComponent(val) + "/reportar";
+  }
+
+  let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+  html5QrcodeScanner.render(onScanSuccess);
+</script>
+{% endblock %}

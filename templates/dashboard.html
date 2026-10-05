@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Dashboard de Laboratorios{% endblock %}
+
+{% block content %}
+
+<!-- 1. VISTA EJECUTIVA EXCLUSIVA DEL PRESIDENTE DE ACADEMIA -->
+{% if usuario.rol.value == 'Presidente de Academia' %}
+<div class="card mb-4 border-primary shadow-sm">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+    <span class="fw-bold"><i class="bi bi-graph-up-arrow me-2"></i> Panel Ejecutivo - Academia de Mecatrónica</span>
+    <a href="/reportes/exportar-datos" class="btn btn-sm btn-light fw-bold">
+      <i class="bi bi-file-earmark-excel text-success me-1"></i> Descargar Datos (CSV)
+    </a>
+  </div>
+  <div class="card-body">
+    <div class="row text-center g-3">
+      <div class="col-md-4">
+        <div class="text-muted small">Laboratorio con Mayor Incidencia</div>
+        <div class="fs-5 fw-bold text-danger">{{ lab_mas_fallas }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-muted small">Historial de Mantenimientos Realizados</div>
+        <div class="fs-5 fw-bold text-success">{{ total_mantenimientos }} intervenciones</div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-muted small">Estado General de la Red de Labs</div>
+        <div class="fs-5 fw-bold text-info">9 Espacios Monitoreados</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- 2. RESUMEN RÁPIDO GENERAL -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card p-3 card-stat shadow-sm bg-white">
+      <div class="text-muted small">Equipos Registrados</div>
+      <div class="h3 fw-bold my-1">{{ equipos_total }}</div>
+      <a href="/equipos" class="small text-decoration-none">Ver inventario &rarr;</a>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 card-warning-stat shadow-sm bg-white">
+      <div class="text-muted small">Equipos Fuera de Servicio</div>
+      <div class="h3 fw-bold text-danger my-1">{{ equipos_fuera }}</div>
+      <span class="small text-muted">Paro o mantenimiento</span>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm bg-white border-start border-4 border-warning">
+      <div class="text-muted small">Insumos en Stock Bajo</div>
+      <div class="h3 fw-bold text-warning my-1">{{ insumos_alerta|length }}</div>
+      <a href="/insumos" class="small text-decoration-none">Revisar almacén &rarr;</a>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm bg-white border-start border-4 border-success">
+      <div class="text-muted small">Préstamos en Curso</div>
+      <div class="h3 fw-bold text-success my-1">{{ prestamos_activos|length }}</div>
+      <a href="/prestamos" class="small text-decoration-none">Ver bitácora &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- 3. LISTA DE INCIDENCIAS / TICKETS -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> 
+      {% if usuario.rol.value in ['Profesor', 'Alumno'] %}
+        Mis Incidencias Reportadas
+      {% elif usuario.rol.value == 'Encargado de Laboratorio' %}
+        Incidencias de mi Laboratorio Asignado
+      {% else %}
+        Todas las Incidencias Pendientes (Global)
+      {% endif %}
+    </span>
+    <span class="badge bg-danger">{{ tickets|length }} Activos</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Equipo / ID</th>
+          <th>Prioridad</th>
+          <th>Reportado Por</th>
+          <th>Descripción</th>
+          <th>Evidencia</th>
+          {% if usuario.rol.value in ['Laboratorista', 'Encargado de Laboratorio', 'Presidente de Academia'] %}
+          <th>Acción Técnica</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td>
+            <strong>{{ t.equipo.nombre if t.equipo else 'N/A' }}</strong><br>
+            <small class="text-muted">{{ t.equipo_id }} ({{ t.equipo.laboratorio.nombre if t.equipo else '' }})</small>
+          </td>
+          <td>
+            <span class="badge {% if t.prioridad.value == 'Alta/Paro de Práctica' %}bg-danger{% elif t.prioridad.value == 'Media' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {{ t.prioridad.value }}
+            </span>
+          </td>
+          <td>{{ t.nombre_reporta }}<br><small class="text-muted">{{ t.matricula_reporta }}</small></td>
+          <td>{{ t.descripcion }}</td>
+          <td>
+            {% if t.evidencia_multimedia %}
+              <a href="{{ t.evidencia_multimedia }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-paperclip"></i> Ver</a>
+            {% else %}
+              <span class="text-muted small">Sin archivo</span>
+            {% endif %}
+          </td>
+          {% if usuario.rol.value in ['Laboratorista', 'Encargado de Laboratorio', 'Presidente de Academia'] %}
+          <td>
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#resolverModal{{ t.id }}">
+              <i class="bi bi-wrench"></i> Resolver
+            </button>
+
+            <!-- Modal Cierre de Incidencia -->
+            <div class="modal fade" id="resolverModal{{ t.id }}" tabindex="-1">
+              <div class="modal-dialog">
+                <form action="/tickets/{{ t.id }}/resolver" method="post" class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Cierre Técnico - {{ t.equipo.nombre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">Técnico Responsable</label>
+                      <input type="text" name="tecnico_responsable" class="form-control" required value="{{ usuario.nombre_completo }}">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Tipo de Servicio</label>
+                      <select name="tipo_servicio" class="form-select">
+                        <option value="Correctivo Inmediato">Correctivo Inmediato</option>
+                        <option value="Ajuste Preventivo">Ajuste Preventivo</option>
+                        <option value="Calibración">Calibración</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Refacciones / Insumos Utilizados</label>
+                      <input type="text" name="refacciones" class="form-control" placeholder="Ej. Cambio de fusible 10A, conector neumático">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Observaciones Técnicas</label>
+                      <textarea name="observaciones" class="form-control" rows="3" required placeholder="Describe las acciones tomadas para restaurar el equipo"></textarea>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cerrar Ticket y Reactivar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">No hay tickets pendientes registrados en esta vista.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

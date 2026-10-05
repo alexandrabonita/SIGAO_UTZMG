@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Incidencias de Laboratorio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="fw-bold mb-0">UTZMG - Reporte de Incidencias Técnicas</h4>
+      <div class="text-muted small">Filtro aplicado: {{ estatus_filtro if estatus_filtro else 'Todos los Estatus' }}</div>
+    </div>
+    <button onclick="window.print()" class="btn btn-primary btn-sm no-print">Imprimir Reporte</button>
+  </div>
+
+  <table class="table table-bordered table-striped align-middle" style="font-size: 11pt;">
+    <thead class="table-dark">
+      <tr>
+        <th>Folio</th>
+        <th>Equipo / Lab</th>
+        <th>Prioridad</th>
+        <th>Reportó</th>
+        <th>Fecha</th>
+        <th>Estatus</th>
+        <th>Diagnóstico Encargado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+      <tr>
+        <td>#{{ t.id }}</td>
+        <td>{{ t.equipo.nombre if t.equipo else 'N/A' }} <br><small class="text-muted">{{ t.equipo.laboratorio.nombre if t.equipo else '' }}</small></td>
+        <td>{{ t.prioridad.value }}</td>
+        <td>{{ t.nombre_reporta }} ({{ t.matricula_reporta }})</td>
+        <td>{{ t.fecha_reporte.strftime('%d/%m/%Y') }}</td>
+        <td><strong>{{ t.estatus.value }}</strong></td>
+        <td>{{ t.diagnostico_encargado if t.diagnostico_encargado else 'Sin dictamen' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center">No se encontraron tickets en esta categoría.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

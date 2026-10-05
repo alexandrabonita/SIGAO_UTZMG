@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Inventario de Equipos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="h4 fw-bold mb-0">Inventario de Equipos por Laboratorio</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoEquipoModal"><i class="bi bi-plus-circle"></i> Registrar Máquina</button>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Código QR</th>
+          <th>Nombre de Máquina / Herramental</th>
+          <th>Laboratorio</th>
+          <th>Marca / Modelo</th>
+          <th>Estatus</th>
+          <th>Acción Rápida</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in equipos %}
+        <tr>
+          <td><code>{{ e.id_codigo_qr }}</code></td>
+          <td><strong>{{ e.nombre }}</strong></td>
+          <td>{{ e.laboratorio.nombre }}</td>
+          <td>{{ e.marca }} {{ e.modelo }}</td>
+          <td>
+            <span class="badge {% if e.estatus.value == 'Operativo' %}bg-success{% elif e.estatus.value == 'Prestado' %}bg-primary{% else %}bg-danger{% endif %}">
+              {{ e.estatus.value }}
+            </span>
+          </td>
+          <td>
+            <a href="/equipos/{{ e.id_codigo_qr }}/reportar" class="btn btn-sm btn-outline-danger"><i class="bi bi-exclamation-triangle"></i> Reportar</a>
+            {% if e.manual_pdf_url %}
+              <a href="{{ e.manual_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Manual</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Registro Equipo -->
+<div class="modal fade" id="nuevoEquipoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form action="/equipos/nuevo" method="post" enctype="multipart/form-data" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Alta de Equipo / Banco</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Código QR / Identificador Único</label>
+          <input type="text" name="id_codigo_qr" class="form-control" required placeholder="Ej. CNC-FANUC-01">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Laboratorio Perteneciente</label>
+          <select name="laboratorio_id" class="form-select">
+            {% for l in laboratorios %}<option value="{{ l.id }}">{{ l.nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nombre del Equipo</label>
+          <input type="text" name="nombre" class="form-control" required placeholder="Ej. Centro de Maquinado CNC Vertical">
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <label class="form-label">Marca</label>
+            <input type="text" name="marca" class="form-control" placeholder="Ej. Haas, Fanuc">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Modelo</label>
+            <input type="text" name="modelo" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Número de Serie</label>
+          <input type="text" name="num_serie" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Manual / Ficha Técnica (PDF Opcional)</label>
+          <input type="file" name="manual_file" accept=".pdf" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Registrar en Inventario</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

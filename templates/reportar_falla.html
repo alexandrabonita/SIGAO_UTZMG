@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Reportar Incidencia - {{ equipo.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white py-3">
+        <h4 class="h5 mb-0"><i class="bi bi-exclamation-octagon"></i> Ficha y Reporte de Fallo</h4>
+      </div>
+      <div class="card-body">
+        <div class="p-3 bg-light rounded mb-3">
+          <div class="fw-bold">{{ equipo.nombre }}</div>
+          <div class="small text-muted"><strong>Lab:</strong> {{ equipo.laboratorio.nombre }} | <strong>QR:</strong> {{ equipo.id_codigo_qr }}</div>
+          <div class="small text-muted"><strong>Estatus actual:</strong> {{ equipo.estatus.value }}</div>
+          {% if equipo.manual_pdf_url %}
+            <div class="mt-2"><a href="{{ equipo.manual_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-pdf"></i> Consultar Hoja Técnica / Manual</a></div>
+          {% endif %}
+        </div>
+
+        <form action="/tickets/crear" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="equipo_id" value="{{ equipo.id_codigo_qr }}">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Matrícula o Nómina</label>
+              <input type="text" name="matricula_reporta" class="form-control" required placeholder="Ej. 22030104">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre Completo</label>
+              <input type="text" name="nombre_reporta" class="form-control" required placeholder="Docente o Estudiante">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Prioridad / Impacto</label>
+            <select name="prioridad" class="form-select" required>
+              <option value="Baja">Baja (Detalle estético o menor, la práctica continúa)</option>
+              <option value="Media" selected>Media (Fallo en sensor/accesorio, trabajo parcial)</option>
+              <option value="Alta/Paro de Práctica">Alta / Paro de Práctica (Máquina inoperable o riesgo eléctrico)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripción de la Falla</label>
+            <textarea name="descripcion" class="form-control" rows="4" required placeholder="Describe claramente los síntomas del desperfecto..."></textarea>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Evidencia de Foto o Video (Opcional)</label>
+            <input type="file" name="evidencia" accept="image/*,video/*" capture="environment" class="form-control">
+            <div class="form-text">Puedes tomar la foto directamente con la cámara del celular.</div>
+          </div>
+
+          <button type="submit" class="btn btn-danger w-100 py-2 fw-bold"><i class="bi bi-send-fill"></i> Registrar Ticket de Incidencia</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
